@@ -33,4 +33,3 @@ jobs:
           sed -i "s/<VERSION>/${GITHUB_SHA}/g" deployment.yaml 
           sed -i "s/<GITHUB_SHA>/${GITHUB_SHA}/g" deployment.yaml 
           kubectl apply -f deployment.yaml
-    
