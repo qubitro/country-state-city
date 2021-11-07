@@ -1,0 +1,36 @@
+name: "Build and Deploy to Azure Kubernetes Service Cluster"
+
+on: push
+
+env:
+  GITHUB_SHA: ${{ github.sha}}
+  REGISTRY_HOSTNAME: ghcr.io
+jobs:
+  setup-build-publish-deploy:
+    name: "Build"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Build:checkout"
+        uses: actions/checkout@v2
+      - name: "Build:dockerimage"
+        uses: docker/build-push-action@v1
+        with:
+          registry: ghcr.io
+          username: "qubitro"
+          password: ${{ secrets.GCR_SECRET }}
+          repository: qubitro/country-state-city
+          tags: "${{ github.sha}}"
+          dockerfile: Dockerfile
+      - name: "Set Azure Cluster"
+        uses: Azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: qubitro-aks-dev
+          resource-group: qubitro-dev
+      - name: Deploy
+        run: |
+          kubectl -n default create secret docker-registry ${GITHUB_SHA} --docker-server=ghcr.io --docker-username=qubitro --docker-password=${{ secrets.GCR_SECRET }} --docker-email=beray@qubitro.com
+          sed -i "s/<VERSION>/${GITHUB_SHA}/g" deployment.yaml 
+          sed -i "s/<GITHUB_SHA>/${GITHUB_SHA}/g" deployment.yaml 
+          kubectl apply -f deployment.yaml
+    
