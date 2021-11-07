@@ -1,0 +1,44 @@
+# golang-api.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: country-state-city
+spec:
+  ports:
+  - port: 3001
+    targetPort: 3001
+  selector:
+    app: country-state-city
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: country-state-city
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: country-state-city
+  template:
+    metadata:
+      labels:
+        app: country-state-city
+    spec:
+      containers:
+      - name: country-state-city
+        image: ghcr.io/qubitro/country-state-city:<VERSION>
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 512Mi
+          requests:
+            cpu: "0.1"
+            memory: 256Mi
+        ports:
+        - containerPort: 3001
+      dnsPolicy: Default
+      imagePullSecrets:
+      - name: <GITHUB_SHA>
+  strategy:
+    type: RollingUpdate
